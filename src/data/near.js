@@ -8,14 +8,6 @@ export const StorageCostPerByte = Big(10).pow(19);
 // const isLocalhost = window.location.hostname === "localhost";
 
 export const IsMainnet = true;
-const TestNearConfig = {
-  networkId: "testnet",
-  nodeUrl: "https://rpc.testnet.near.org",
-  archivalNodeUrl: "https://rpc.testnet.internal.near.org",
-  walletUrl: "https://wallet.testnet.near.org",
-  storageCostPerByte: StorageCostPerByte,
-  wrapNearAccountId: "wrap.testnet",
-};
 export const MainNearConfig = {
   networkId: "mainnet",
   nodeUrl: "https://rpc.mainnet.near.org",
@@ -23,9 +15,11 @@ export const MainNearConfig = {
   walletUrl: "https://wallet.near.org",
   storageCostPerByte: StorageCostPerByte,
   wrapNearAccountId: "wrap.near",
+  refContractAccountId: "v2.ref-finance.near",
 };
 
-export const NearConfig = IsMainnet ? MainNearConfig : TestNearConfig;
+export const NearConfig = MainNearConfig;
+export const LsKey = ":burrow-live-feed:";
 
 async function _initNear() {
   const keyStore = new nearAPI.keyStores.BrowserLocalStorageKeyStore();

@@ -1,6 +1,6 @@
 {
-  "short_name": "NFT Mints",
-  "name": "NFT Mints in realtime",
+  "short_name": "Live Burrow Feed",
+  "name": "Live Burrow feed (NEAR)",
   "icons": [
     {
       "src": "favicon.png",
@@ -10,6 +10,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#ffffff",
-  "background_color": "#0D192B"
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
 }

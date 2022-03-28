@@ -133,7 +133,48 @@ export const isoDate = (d) =>
   d ? new Date(d).toISOString().substring(0, 10) : "";
 
 export function accountTrim(accountId) {
-  return (accountId && accountId.length > 14 + 14 + 1) ?
-    accountId.slice(0, 14) + '…' + accountId.slice(-14) :
-    accountId;
+  return accountId && accountId.length > 14 + 14 + 1
+    ? accountId.slice(0, 14) + "…" + accountId.slice(-14)
+    : accountId;
 }
+
+export const computeUsdBalance = (refFinance, tokenAccountId, balance) => {
+  if (refFinance && !refFinance.loading && balance) {
+    if (tokenAccountId === NearConfig.wrapNearAccountId) {
+      return balance.div(OneNear).mul(refFinance.nearPrice);
+    } else if (
+      tokenAccountId in refFinance.prices &&
+      refFinance.nearPrice.gt(0)
+    ) {
+      const p = refFinance.prices[tokenAccountId];
+      const balanceIn = p.totalOther;
+      const balanceOut = p.totalNear;
+      let amountWithFee = Big(balance.div(1000));
+      const amountOut = amountWithFee
+        .mul(balanceOut)
+        .div(balanceIn.add(amountWithFee))
+        .round(0, 0);
+
+      return amountOut.mul(1000).div(OneNear).mul(refFinance.nearPrice);
+    }
+  }
+  return null;
+};
+
+export const fromTokenBalance = (token, balance, adjustForBurrow) => {
+  return !token || token.invalidAccount || token.notFound || !balance
+    ? balance
+    : balance.div(Big(10).pow(token.metadata.decimals));
+};
+
+export const toTokenBalance = (token, balance) => {
+  return !token || token.invalidAccount || token.notFound || !balance
+    ? balance
+    : balance.mul(Big(10).pow(token.metadata.decimals));
+};
+
+export const fromBurrowBalance = (token, balance) => {
+  return !token || token.invalidAccount || token.notFound || !balance
+    ? balance
+    : balance.div(Big(10).pow(Math.max(0, 18 - token.metadata.decimals)));
+};

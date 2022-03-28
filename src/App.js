@@ -1,33 +1,37 @@
-import "./App.css";
+import "./App.scss";
+import "error-polyfill";
+import "bootstrap/dist/js/bootstrap.bundle";
 import { useEffect, useState } from "react";
-import NftToken from "./NftToken";
+import TimeAgo from "timeago-react";
+import SocialAccount from "./components/SocialAccount/SocialAccount";
+import { keysToCamel } from "./data/utils";
+import TokenBalance from "./components/token/TokenBalance";
+import Big from "big.js";
+import TokenBadge from "./components/token/TokenBadge";
 
 let globalIndex = 0;
 
-const nftFilter = [{
-  status: "SUCCESS",
-  event: {
-    standard: "nep171",
-    event: "nft_mint",
-  },
-}, {
-  status: "SUCCESS",
-  event: {
-    standard: "nep171",
-    event: "nft_transfer",
-  },
-}];
+const ContractId = "contract.main.burrow.near";
+const DefaultTokenId = "token.burrow.near";
 
-function listenToNFT(processEvents) {
+const burrowFilter = {
+  status: "SUCCESS",
+  account_id: ContractId,
+  event: {
+    standard: "burrow",
+  },
+};
+
+function listenToBurrow(processEvents) {
   const ws = new WebSocket("wss://events.near.stream/ws");
 
   ws.onopen = () => {
     console.log(`Connection to WS has been established`);
     ws.send(
       JSON.stringify({
-        secret: "ohyeahnftsss",
-        filter: nftFilter,
-        fetch_past_events: 20,
+        secret: "brrr",
+        filter: burrowFilter,
+        fetch_past_events: 50,
       })
     );
   };
@@ -40,63 +44,65 @@ function listenToNFT(processEvents) {
   };
 }
 
-// async function fetchEvents() {
-//   const res = await fetch("https://events.near.stream/events", {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify({
-//       filter: nftFilter,
-//       limit: 10,
-//     }),
-//   });
-//   try {
-//     const response = await res.json();
-//     return response.events;
-//   } catch (e) {
-//     console.log(e);
-//     return [];
-//   }
-// }
-
 function processEvent(event) {
-  return (event?.event?.data[0]?.token_ids || []).map((tokenId) => ({
-    time: new Date(parseFloat(event.block_timestamp) / 1e6),
-    contractId: event.account_id,
-    ownerId: event.event.data[0].owner_id,
-    tokenId,
-    isTransfer: event.event.event === "nft_transfer",
+  return {
     index: globalIndex++,
-  }));
+    time: new Date(parseFloat(event.blockTimestamp) / 1e6),
+    accountId: event.event.data[0].accountId,
+    event: event.event.event,
+    data: event.event.data[0],
+  };
 }
 
 function App() {
-  const [nfts, setNfts] = useState([]);
+  const [burrowActions, setBurrowActions] = useState([]);
 
-  // Setting up NFTs
   useEffect(() => {
     const processEvents = (events) => {
-      // console.log(events);
-      events = events.flatMap(processEvent);
+      events = events.map(keysToCamel).flatMap(processEvent);
       events.reverse();
-      setNfts((prevState) => {
-        const newNfts = [...events, ...prevState];
-        return newNfts.slice(0, 100);
+      setBurrowActions((prevState) => {
+        const newActions = [...events, ...prevState];
+        return newActions.slice(0, 250);
       });
     };
 
-    // fetchEvents().then(processEvents);
-    listenToNFT(processEvents);
+    listenToBurrow(processEvents);
   }, []);
 
   return (
     <div>
-      <h1>Live NFT feed</h1>
-      <div className="card-wrapper">
-        {nfts.map((nft) => {
-          return (
-            <NftToken key={`${nft.index}`} nft={nft} />
-          );
-        })}
+      <h1>Live Burrow feed</h1>
+      <div className="table-responsive">
+        <table className="table align-middle">
+          <tbody>
+            {burrowActions.map((action) => {
+              const tokenAccountId = action.data?.tokenId || DefaultTokenId;
+              return (
+                <tr key={action.index}>
+                  <td className="col-1">
+                    <TimeAgo datetime={action.time} />
+                  </td>
+                  <td className="col-3">
+                    <SocialAccount accountId={action.accountId} clickable />
+                  </td>
+                  <td className="col-2">{action.event}</td>
+                  <td className="col-2 text-end">
+                    <TokenBalance
+                      clickable
+                      tokenAccountId={tokenAccountId}
+                      adjustForBurrow
+                      balance={Big(action.data?.amount || 0)}
+                    />
+                  </td>
+                  <td className="col-4">
+                    <TokenBadge tokenAccountId={tokenAccountId} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
