@@ -22,7 +22,24 @@ const burrowFilter = {
   },
 };
 
+let reconnectTimeout = null;
+
 function listenToBurrow(processEvents) {
+  const scheduleReconnect = (timeOut) => {
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout);
+      reconnectTimeout = null;
+    }
+    reconnectTimeout = setTimeout(() => {
+      listenToBurrow(processEvents);
+    }, timeOut);
+  };
+
+  if (document.hidden) {
+    scheduleReconnect(1000);
+    return;
+  }
+
   const ws = new WebSocket("wss://events.near.stream/ws");
 
   ws.onopen = () => {
@@ -34,6 +51,10 @@ function listenToBurrow(processEvents) {
         fetch_past_events: 50,
       })
     );
+  };
+  ws.onclose = () => {
+    console.log(`WS Connection has been closed`);
+    scheduleReconnect(1);
   };
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data);
@@ -61,8 +82,16 @@ function App() {
     const processEvents = (events) => {
       events = events.map(keysToCamel).flatMap(processEvent);
       events.reverse();
+
       setBurrowActions((prevState) => {
-        const newActions = [...events, ...prevState];
+        const newActions = [
+          ...events.filter(
+            (event) =>
+              prevState.length === 0 ||
+              event.time.getTime() > prevState[0].time.getTime()
+          ),
+          ...prevState,
+        ];
         return newActions.slice(0, 250);
       });
     };
