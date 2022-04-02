@@ -21,7 +21,7 @@ const defaultBurrowFilter = {
     standard: "burrow",
   },
 };
-let burrowFilter = Object.assign({}, defaultBurrowFilter);
+let burrowFilter = JSON.parse(JSON.stringify(defaultBurrowFilter));
 
 let reconnectTimeout = null;
 let ws = null;
@@ -53,7 +53,6 @@ function listenToBurrow(processEvents) {
 
   ws.onopen = () => {
     console.log(`Connection to WS has been established`);
-    console.log(burrowFilter);
     ws.send(
       JSON.stringify({
         secret: "brrr",
@@ -113,11 +112,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    console.log("filter account id", filterAccountId);
     if (filterAccountId === null) {
       return;
     }
-    burrowFilter = Object.assign({}, defaultBurrowFilter);
+    burrowFilter = JSON.parse(JSON.stringify(defaultBurrowFilter));
     if (filterAccountId) {
       burrowFilter.event.data = [{ account_id: filterAccountId }];
     }
