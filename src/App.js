@@ -14,15 +14,19 @@ let globalIndex = 0;
 const ContractId = "contract.main.burrow.near";
 const DefaultTokenId = "token.burrow.near";
 
-const burrowFilter = {
+const defaultBurrowFilter = {
   status: "SUCCESS",
   account_id: ContractId,
   event: {
     standard: "burrow",
   },
 };
+let burrowFilter = Object.assign({}, defaultBurrowFilter);
 
 let reconnectTimeout = null;
+let ws = null;
+
+let filterTypingTimeout = null;
 
 function listenToBurrow(processEvents) {
   const scheduleReconnect = (timeOut) => {
@@ -40,10 +44,16 @@ function listenToBurrow(processEvents) {
     return;
   }
 
-  const ws = new WebSocket("wss://events.near.stream/ws");
+  if (ws) {
+    ws.close();
+    return;
+  }
+
+  ws = new WebSocket("wss://events.near.stream/ws");
 
   ws.onopen = () => {
     console.log(`Connection to WS has been established`);
+    console.log(burrowFilter);
     ws.send(
       JSON.stringify({
         secret: "brrr",
@@ -53,6 +63,7 @@ function listenToBurrow(processEvents) {
     );
   };
   ws.onclose = () => {
+    ws = null;
     console.log(`WS Connection has been closed`);
     scheduleReconnect(1);
   };
@@ -61,6 +72,7 @@ function listenToBurrow(processEvents) {
     processEvents(data.events);
   };
   ws.onerror = (err) => {
+    ws = null;
     console.log("WebSocket error", err);
   };
 }
@@ -77,6 +89,7 @@ function processEvent(event) {
 
 function App() {
   const [burrowActions, setBurrowActions] = useState([]);
+  const [filterAccountId, setFilterAccountId] = useState(null);
 
   useEffect(() => {
     const processEvents = (events) => {
@@ -99,9 +112,41 @@ function App() {
     listenToBurrow(processEvents);
   }, []);
 
+  useEffect(() => {
+    console.log("filter account id", filterAccountId);
+    if (filterAccountId === null) {
+      return;
+    }
+    burrowFilter = Object.assign({}, defaultBurrowFilter);
+    if (filterAccountId) {
+      burrowFilter.event.data = [{ account_id: filterAccountId }];
+    }
+    if (filterTypingTimeout) {
+      clearTimeout(filterTypingTimeout);
+      filterTypingTimeout = null;
+    }
+    filterTypingTimeout = setTimeout(() => {
+      if (ws) {
+        setBurrowActions([]);
+        ws.close();
+      }
+    }, 500);
+  }, [filterAccountId]);
+
   return (
     <div>
       <h1>Live Burrow feed</h1>
+      <div>
+        <label htmlFor="accountIdFilter">Filter by account ID:</label>
+        <input
+          className="form-control"
+          type="text"
+          id="accountIdFilter"
+          placeholder="Account ID"
+          value={filterAccountId || ""}
+          onChange={(e) => setFilterAccountId(e.target.value)}
+        />
+      </div>
       <div className="table-responsive">
         <table className="table align-middle">
           <tbody>
