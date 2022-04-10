@@ -26,7 +26,7 @@ export default function SocialAccount(props) {
       <>
           <a href={accountUrl}>{inner}</a>
           <a href={`/#account=${accountId}`} onClick={props.onAccountClick}>
-            <img src={LinkToAccountPage} title={`Filter ${accountId} actions`} alt={`Filter ${accountId} actions`} />
+            <img src={LinkToAccountPage} title={`Filter ${accountId} actions`} alt={`Filter ${accountId} actions`} style={{paddingLeft: "5px"}} />
           </a>
       </>
       : inner;
