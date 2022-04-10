@@ -1,5 +1,6 @@
 import React from "react";
 import DefaultAvatar from "../../images/sasha_anon.png";
+import LinkToAccountPage from "../../images/link_to_account_page.png";
 import { useSocialAccount } from "../../data/socialAccount";
 import "./SocialAccount.scss";
 import { accountTrim } from "../../data/utils";
@@ -20,5 +21,13 @@ export default function SocialAccount(props) {
       <span title={accountId}>{displayName}</span>
     </div>
   );
-  return clickable ? <a href={accountUrl}>{inner}</a> : inner;
+
+  return clickable ?
+      <>
+          <a href={accountUrl}>{inner}</a>
+          <a href={`/#account=${accountId}`} onClick={props.onAccountClick}>
+            <img src={LinkToAccountPage} title={`Filter ${accountId} actions`} alt={`Filter ${accountId} actions`} />
+          </a>
+      </>
+      : inner;
 }

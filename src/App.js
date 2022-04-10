@@ -111,7 +111,15 @@ function App() {
     listenToBurrow(processEvents);
   }, []);
 
+  const onAccountClick = (accountId) => setFilterAccountId((accountId));
+
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.hash.replace("#","?"));
+    const account = urlParams.get('account');
+    if(account){
+      setFilterAccountId(account);
+    }
+
     if (filterAccountId === null) {
       return;
     }
@@ -131,9 +139,29 @@ function App() {
     }, 500);
   }, [filterAccountId]);
 
+  const showAction = (action) => {
+    switch (action.event) {
+      case 'liquidate':
+        return <>
+          <div>
+            Liquidation of <a href={`/#account=${action.data.liquidationAccountId}`} onClick={setFilterAccountId}>
+              {action.data.liquidationAccountId}
+            </a>
+          </div>
+          <div>
+            Profit: ${(parseFloat(action.data.collateralSum) - parseFloat(action.data.repaidSum)).toFixed(4)}
+          </div>
+          </>;
+      default:
+        return action.event;
+    }
+  }
+
   return (
     <div>
-      <h1>Live Burrow feed</h1>
+      <a href="/">
+        <h1>Live Burrow feed</h1>
+      </a>
       <div>
         <label htmlFor="accountIdFilter">Filter by account ID:</label>
         <input
@@ -156,9 +184,9 @@ function App() {
                     <TimeAgo datetime={action.time} />
                   </td>
                   <td className="col-3">
-                    <SocialAccount accountId={action.accountId} clickable />
+                    <SocialAccount accountId={action.accountId} onAccountClick={onAccountClick} clickable />
                   </td>
-                  <td className="col-2">{action.event}</td>
+                  <td className="col-2">{showAction(action)}</td>
                   <td className="col-2 text-end">
                     <TokenBalance
                       clickable
