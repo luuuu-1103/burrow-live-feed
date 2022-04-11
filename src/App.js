@@ -1,13 +1,14 @@
 import "./App.scss";
 import "error-polyfill";
 import "bootstrap/dist/js/bootstrap.bundle";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import TimeAgo from "timeago-react";
 import SocialAccount from "./components/SocialAccount/SocialAccount";
 import { keysToCamel } from "./data/utils";
 import TokenBalance from "./components/token/TokenBalance";
 import Big from "big.js";
 import TokenBadge from "./components/token/TokenBadge";
+import LinkToAccountPage from "./images/link_to_account_page.png";
 
 let globalIndex = 0;
 
@@ -88,7 +89,11 @@ function processEvent(event) {
 
 function App() {
   const [burrowActions, setBurrowActions] = useState([]);
-  const [filterAccountId, setFilterAccountId] = useState(null);
+
+  const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+  const [filterAccountId, setFilterAccountId] = useState(
+    urlParams.get("account") || null
+  );
 
   useEffect(() => {
     const processEvents = (events) => {
@@ -111,15 +116,7 @@ function App() {
     listenToBurrow(processEvents);
   }, []);
 
-  const onAccountClick = (accountId) => setFilterAccountId((accountId));
-
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.hash.replace("#","?"));
-    const account = urlParams.get('account');
-    if(account){
-      setFilterAccountId(account);
-    }
-
     if (filterAccountId === null) {
       return;
     }
@@ -131,7 +128,13 @@ function App() {
       clearTimeout(filterTypingTimeout);
       filterTypingTimeout = null;
     }
+    const accountId = filterAccountId;
     filterTypingTimeout = setTimeout(() => {
+      if (accountId === "") {
+        window.location.href = "/#";
+      } else {
+        window.location.href = `/#account=${accountId}`;
+      }
       if (ws) {
         setBurrowActions([]);
         ws.close();
@@ -141,25 +144,37 @@ function App() {
 
   const showAction = (action) => {
     switch (action.event) {
-      case 'liquidate':
-        return <>
-          <div>
-            Liquidation of <a href={`/#account=${action.data.liquidationAccountId}`} onClick={setFilterAccountId}>
-              {action.data.liquidationAccountId}
-            </a>
-          </div>
-          <div>
-            Profit: ${(parseFloat(action.data.collateralSum) - parseFloat(action.data.repaidSum)).toFixed(4)}
-          </div>
-          </>;
+      case "liquidate":
+        return (
+          <>
+            <div>
+              Liquidation of{" "}
+              <a
+                href={`/#account=${action.data.liquidationAccountId}`}
+                onClick={() =>
+                  setFilterAccountId(action.data.liquidationAccountId)
+                }
+              >
+                {action.data.liquidationAccountId}
+              </a>
+            </div>
+            <div>
+              Profit: $
+              {(
+                parseFloat(action.data.collateralSum) -
+                parseFloat(action.data.repaidSum)
+              ).toFixed(2)}
+            </div>
+          </>
+        );
       default:
         return action.event;
     }
-  }
+  };
 
   return (
     <div>
-      <a href="/">
+      <a href="/#" onClick={() => setFilterAccountId("")}>
         <h1>Live Burrow feed</h1>
       </a>
       <div>
@@ -184,7 +199,18 @@ function App() {
                     <TimeAgo datetime={action.time} />
                   </td>
                   <td className="col-3">
-                    <SocialAccount accountId={action.accountId} onAccountClick={onAccountClick} clickable />
+                    <SocialAccount accountId={action.accountId} clickable />
+                    <a
+                      href={`/#account=${action.accountId}`}
+                      onClick={() => setFilterAccountId(action.accountId)}
+                    >
+                      <img
+                        src={LinkToAccountPage}
+                        title={`Filter ${action.accountId} actions`}
+                        alt={`Filter ${action.accountId} actions`}
+                        style={{ paddingLeft: "5px" }}
+                      />
+                    </a>
                   </td>
                   <td className="col-2">{showAction(action)}</td>
                   <td className="col-2 text-end">
