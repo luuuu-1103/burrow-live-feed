@@ -8,7 +8,7 @@ import { keysToCamel } from "./data/utils";
 import TokenBalance from "./components/token/TokenBalance";
 import Big from "big.js";
 import TokenBadge from "./components/token/TokenBadge";
-import LinkToAccountPage from "./images/link_to_account_page.png";
+import MutedDecimals from "./components/common/MutedDecimals";
 
 let globalIndex = 0;
 
@@ -148,22 +148,24 @@ function App() {
         return (
           <>
             <div>
-              Liquidation of{" "}
-              <a
-                href={`/#account=${action.data.liquidationAccountId}`}
-                onClick={() =>
-                  setFilterAccountId(action.data.liquidationAccountId)
-                }
-              >
-                {action.data.liquidationAccountId}
-              </a>
-            </div>
-            <div>
-              Profit: $
-              {(
-                parseFloat(action.data.collateralSum) -
-                parseFloat(action.data.repaidSum)
-              ).toFixed(2)}
+              Liquidation! Profit{" "}
+              <span className="font-monospace fw-bold">
+                <span className="text-secondary">$</span>
+                <MutedDecimals
+                  value={(
+                    parseFloat(action.data.collateralSum) -
+                    parseFloat(action.data.repaidSum)
+                  ).toFixed(2)}
+                />
+              </span>
+              {}
+              :
+              <br />
+              <SocialAccount
+                accountId={action.data.liquidationAccountId}
+                clickable
+                filterLink={setFilterAccountId}
+              />
             </div>
           </>
         );
@@ -199,21 +201,14 @@ function App() {
                     <TimeAgo datetime={action.time} />
                   </td>
                   <td className="col-3">
-                    <SocialAccount accountId={action.accountId} clickable />
-                    <a
-                      href={`/#account=${action.accountId}`}
-                      onClick={() => setFilterAccountId(action.accountId)}
-                    >
-                      <img
-                        src={LinkToAccountPage}
-                        title={`Filter ${action.accountId} actions`}
-                        alt={`Filter ${action.accountId} actions`}
-                        style={{ paddingLeft: "5px" }}
-                      />
-                    </a>
+                    <SocialAccount
+                      accountId={action.accountId}
+                      clickable
+                      filterLink={setFilterAccountId}
+                    />
                   </td>
-                  <td className="col-2">{showAction(action)}</td>
-                  <td className="col-2 text-end">
+                  <td className="col-3">{showAction(action)}</td>
+                  <td className="col-1 text-end">
                     <TokenBalance
                       clickable
                       tokenAccountId={tokenAccountId}
@@ -221,7 +216,7 @@ function App() {
                       balance={Big(action.data?.amount || 0)}
                     />
                   </td>
-                  <td className="col-4">
+                  <td className="col-3">
                     <TokenBadge tokenAccountId={tokenAccountId} />
                   </td>
                 </tr>

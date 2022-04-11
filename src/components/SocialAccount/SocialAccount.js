@@ -3,10 +3,12 @@ import DefaultAvatar from "../../images/sasha_anon.png";
 import { useSocialAccount } from "../../data/socialAccount";
 import "./SocialAccount.scss";
 import { accountTrim } from "../../data/utils";
+import LinkToAccountPage from "../../images/link_to_account_page.png";
 
 export default function SocialAccount(props) {
   const accountId = props.accountId;
   const clickable = props.clickable;
+  const filterLink = props.filterLink;
   const socialAccount = useSocialAccount(accountId);
   const avatarUrl = socialAccount?.avatar?.url || DefaultAvatar;
   const shortenAccountId = accountTrim(accountId);
@@ -21,5 +23,22 @@ export default function SocialAccount(props) {
     </div>
   );
 
-  return clickable ? <a href={accountUrl}>{inner}</a> : inner;
+  return (
+    <>
+      {clickable ? <a href={accountUrl}>{inner}</a> : inner}
+      {filterLink && (
+        <a
+          href={`/#account=${accountId}`}
+          onClick={() => filterLink(accountId)}
+        >
+          <img
+            src={LinkToAccountPage}
+            title={`Filter ${accountId} actions`}
+            alt={`Filter ${accountId} actions`}
+            style={{ paddingLeft: "5px" }}
+          />
+        </a>
+      )}
+    </>
+  );
 }
