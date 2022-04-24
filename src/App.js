@@ -22,7 +22,19 @@ const defaultBurrowFilter = {
     standard: "burrow",
   },
 };
-let burrowFilter = JSON.parse(JSON.stringify(defaultBurrowFilter));
+
+function makeFilter(filterAccountId) {
+  if (filterAccountId) {
+    let filter = [makeFilter(), makeFilter()];
+    filter[0].event.data = [{ account_id: filterAccountId }];
+    filter[1].event.data = [{ liquidation_account_id: filterAccountId }];
+    return filter;
+  } else {
+    return JSON.parse(JSON.stringify(defaultBurrowFilter));
+  }
+}
+
+let burrowFilter = makeFilter();
 
 let reconnectTimeout = null;
 let ws = null;
@@ -120,10 +132,7 @@ function App() {
     if (filterAccountId === null) {
       return;
     }
-    burrowFilter = JSON.parse(JSON.stringify(defaultBurrowFilter));
-    if (filterAccountId) {
-      burrowFilter.event.data = [{ account_id: filterAccountId }];
-    }
+    burrowFilter = makeFilter(filterAccountId);
     if (filterTypingTimeout) {
       clearTimeout(filterTypingTimeout);
       filterTypingTimeout = null;
