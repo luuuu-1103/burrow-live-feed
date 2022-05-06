@@ -23,14 +23,21 @@ const defaultBurrowFilter = {
   },
 };
 
-function makeFilter(filterAccountId) {
+function makeFilter(filterAccountId, filterLiquidations) {
   if (filterAccountId) {
-    let filter = [makeFilter(), makeFilter()];
+    let filter = [
+      makeFilter(null, filterLiquidations),
+      makeFilter(null, filterLiquidations),
+    ];
     filter[0].event.data = [{ account_id: filterAccountId }];
     filter[1].event.data = [{ liquidation_account_id: filterAccountId }];
     return filter;
   } else {
-    return JSON.parse(JSON.stringify(defaultBurrowFilter));
+    let filter = JSON.parse(JSON.stringify(defaultBurrowFilter));
+    if (filterLiquidations) {
+      filter.event.event = "liquidate";
+    }
+    return filter;
   }
 }
 
@@ -106,6 +113,7 @@ function App() {
   const [filterAccountId, setFilterAccountId] = useState(
     urlParams.get("account") || null
   );
+  const [filterLiquidations, setFilterLiquidations] = useState(null);
 
   useEffect(() => {
     const processEvents = (events) => {
@@ -129,17 +137,17 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (filterAccountId === null) {
+    if (filterAccountId === null && filterLiquidations === null) {
       return;
     }
-    burrowFilter = makeFilter(filterAccountId);
+    burrowFilter = makeFilter(filterAccountId, filterLiquidations);
     if (filterTypingTimeout) {
       clearTimeout(filterTypingTimeout);
       filterTypingTimeout = null;
     }
     const accountId = filterAccountId;
     filterTypingTimeout = setTimeout(() => {
-      if (accountId === "") {
+      if (!accountId) {
         window.location.href = "/#";
       } else {
         window.location.href = `/#account=${accountId}`;
@@ -149,7 +157,7 @@ function App() {
         ws.close();
       }
     }, 500);
-  }, [filterAccountId]);
+  }, [filterAccountId, filterLiquidations]);
 
   const showAction = (action) => {
     switch (action.event) {
@@ -184,20 +192,38 @@ function App() {
   };
 
   return (
-    <div>
+    <div className="container">
       <a href="/#" onClick={() => setFilterAccountId("")}>
         <h1>Live Burrow feed</h1>
       </a>
-      <div>
-        <label htmlFor="accountIdFilter">Filter by account ID:</label>
+      <div className="form-check">
         <input
-          className="form-control"
-          type="text"
-          id="accountIdFilter"
-          placeholder="Account ID"
-          value={filterAccountId || ""}
-          onChange={(e) => setFilterAccountId(e.target.value)}
+          className="form-check-input"
+          type="checkbox"
+          id="liquidationsFilter"
+          value={filterLiquidations || ""}
+          onChange={(e) => setFilterLiquidations(e.currentTarget.checked)}
         />
+        <label className="form-check-label" htmlFor="liquidationsFilter">
+          Liquidations only
+        </label>
+      </div>
+      <div className="row justify-content-md-center">
+        <div className="col-auto">
+          <label className="col-form-label" htmlFor="accountIdFilter">
+            Filter by account ID:
+          </label>
+        </div>
+        <div className="col">
+          <input
+            className="form-control"
+            type="text"
+            id="accountIdFilter"
+            placeholder="Account ID"
+            value={filterAccountId || ""}
+            onChange={(e) => setFilterAccountId(e.target.value)}
+          />
+        </div>
       </div>
       <div className="table-responsive">
         <table className="table align-middle">
