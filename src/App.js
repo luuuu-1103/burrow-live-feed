@@ -77,7 +77,7 @@ function listenToBurrow(processEvents) {
       JSON.stringify({
         secret: "brrr",
         filter: burrowFilter,
-        fetch_past_events: 50,
+        fetch_past_events: 500,
       })
     );
   };
