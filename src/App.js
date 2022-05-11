@@ -129,7 +129,7 @@ function App() {
           ),
           ...prevState,
         ];
-        return newActions.slice(0, 250);
+        return newActions.slice(0, 500);
       });
     };
 
