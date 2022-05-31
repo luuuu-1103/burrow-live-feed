@@ -186,6 +186,31 @@ function App() {
             </div>
           </>
         );
+      case "force_close":
+        return (
+          <>
+            <div>
+              Force closing! Protocol loss:{" "}
+              <span className="font-monospace fw-bold">
+                <span className="text-secondary">$</span>
+                <MutedDecimals
+                  value={(
+                    parseFloat(action.data.repaidSum) -
+                    parseFloat(action.data.collateralSum)
+                  ).toFixed(2)}
+                />
+              </span>
+              {}
+              :
+              <br />
+              <SocialAccount
+                accountId={action.data.liquidationAccountId}
+                clickable
+                filterLink={setFilterAccountId}
+              />
+            </div>
+          </>
+        );
       default:
         return action.event;
     }
