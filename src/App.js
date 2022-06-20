@@ -96,6 +96,7 @@ function listenToBurrow(processEvents) {
   };
 }
 
+// get what we need from the event, return an object
 function processEvent(event) {
   return {
     index: globalIndex++,
@@ -107,6 +108,9 @@ function processEvent(event) {
 }
 
 function App() {
+  /*
+  use state hook let you use state in functions (without creating class)
+  */
   const [burrowActions, setBurrowActions] = useState([]);
 
   const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
@@ -115,7 +119,22 @@ function App() {
   );
   const [filterLiquidations, setFilterLiquidations] = useState(null);
 
+  /*
+  use effect hook let you perform side effect in function
+
+  often used together with use state, update dom using state
+
+  The function passed to useEffect will run after the render is committed to the screen. 
+  Think of effects as an escape hatch from React’s purely functional world into the imperative world.
+
+By default, effects run after every completed render, 
+but you can choose to fire them only when certain values have changed.
+
+here it only activate after the dep([] passed as second param) change
+*/
   useEffect(() => {
+    // apply processEvent func on every event
+    // update borrow action: add filtered events to prev state (i guess state is 1 block or app state in 1 block)
     const processEvents = (events) => {
       events = events.map(keysToCamel).flatMap(processEvent);
       events.reverse();
@@ -136,6 +155,7 @@ function App() {
     listenToBurrow(processEvents);
   }, []);
 
+  // check if any filter needs to be applied, only activate after filterAccountId or filterLiquidations change
   useEffect(() => {
     if (filterAccountId === null && filterLiquidations === null) {
       return;
